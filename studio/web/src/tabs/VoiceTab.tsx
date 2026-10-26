@@ -79,8 +79,13 @@ export default function VoiceTab({ id, item, goTab }: TabProps) {
   const fillFromScript = () => {
     const s = info.suggestions
     if (!s.length) { message.info('No dialogue found in the script (lines like  Stark: "Take my scarf."  or  Caption: "…").'); return }
-    change(c => { let ls = [...c.lines]; for (const x of s) ls = [...ls, { id: newId(ls), character: x.character, text: x.text, at: x.at, clip: '', gain_db: 0, takes: [] }]; return { ...c, lines: ls } })
-    message.success(`Added ${s.length} line${s.length > 1 ? 's' : ''} from the script — check the times`)
+    // only lines that are not in the list yet (same character + same words; [tags] and punctuation ignored)
+    const norm = (who: string, t: string) => `${who.trim().toLowerCase()}|${t.replace(/\[[^\]]*\]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()}`
+    const have = new Set(cfg.lines.map(l => norm(l.character, l.text)))
+    const add = s.filter(x => !have.has(norm(x.character, x.text)))
+    if (!add.length) { message.info(`All ${s.length} line${s.length > 1 ? 's' : ''} from the script are already in the list.`); return }
+    change(c => { let ls = [...c.lines]; for (const x of add) ls = [...ls, { id: newId(ls), character: x.character, text: x.text, at: x.at, clip: '', gain_db: 0, takes: [] }]; return { ...c, lines: ls } })
+    message.success(`Added ${add.length} new line${add.length > 1 ? 's' : ''} from the script${add.length < s.length ? ` (${s.length - add.length} already here)` : ''} — check the times`)
   }
   const generate = (l: VoiceLine) => {
     const who = castBy(l.character); const vid = l.voice_id || who?.voice_id
@@ -159,7 +164,7 @@ export default function VoiceTab({ id, item, goTab }: TabProps) {
         </Card>
 
         <Card size="small" title="Lines" data-tour="vo-lines" extra={canEdit && <Space>
-          <Tooltip title="Captions and dialogue from the Script tab, placed on their panels"><Button size="small" icon={<FileTextOutlined />} onClick={fillFromScript}>From the script</Button></Tooltip>
+          <Tooltip title="Adds the captions and dialogue from the Script tab that are not in the list yet, placed on their panels"><Button size="small" icon={<FileTextOutlined />} onClick={fillFromScript}>From the script</Button></Tooltip>
           <Button size="small" type="primary" icon={<PlusOutlined />} onClick={() => addLine()}>Add a line</Button>
         </Space>}>
           {!lines.length ? <Empty description="No lines yet. Add one, or take them from the script." /> : <div className="flex flex-col gap-2">
