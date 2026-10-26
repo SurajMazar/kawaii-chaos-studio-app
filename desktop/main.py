@@ -82,7 +82,8 @@ def configure(data_dir: Path | None = None, support: Path = SUPPORT, caches: Pat
     env = {
         'STUDIO_ENV': 'development',                         # local features on (Downloads import, export folder)
         'STUDIO_CODE_ROOT': str(CODE),
-        'STUDIO_DATA_DIR': os.environ.get('STUDIO_DATA_DIR') or str(data_dir or HOME / 'Documents' / APP),
+        # only a default: Settings → Integrations → Local folder can point the app at another folder (STUDIO_DATA_DIR would lock it)
+        'STUDIO_DEFAULT_DATA_DIR': str(data_dir or HOME / 'Documents' / APP),
         'STUDIO_CONFIG_DIR': str(support / 'config'),
         'STUDIO_CACHE_DIR': str(caches / 'cache'),
         'STUDIO_WORKDIR': str(caches / 'work'),
@@ -93,6 +94,7 @@ def configure(data_dir: Path | None = None, support: Path = SUPPORT, caches: Pat
         'STUDIO_SCRIPT_PYTHON': sys.executable,              # the app itself runs the scripts (see _script_mode)
         'STUDIO_NO_AUTOAPP': '1',
     }
+    if data_dir is not None: env['STUDIO_DATA_DIR'] = str(data_dir)          # selftest: a throw-away folder
     os.environ.update(env)
     os.environ.setdefault('STUDIO_ART_SOURCE', 'own')
     ff = _ffmpeg_on_path(support / 'bin')

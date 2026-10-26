@@ -85,7 +85,7 @@ def load() -> Config:
         port=env_int('PORT', env_int('STUDIO_PORT', 8770)),
         config_dir=cfg_dir,
         cache_dir=Path(env('STUDIO_CACHE_DIR', str(STUDIO / '.cache'))).expanduser(),
-        data_dir=Path(env('STUDIO_DATA_DIR', str(CODE_ROOT / 'data'))).expanduser(),
+        data_dir=Path(env('STUDIO_DATA_DIR', env('STUDIO_DEFAULT_DATA_DIR', str(CODE_ROOT / 'data')))).expanduser(),   # DEFAULT: Mac app (Settings may change it)
         workdir=Path(env('STUDIO_WORKDIR', str(STUDIO / '.workcache'))).expanduser(),
         secret_key=env('STUDIO_SECRET_KEY'),
         cookie_secure=env('STUDIO_COOKIE_SECURE', 'auto').lower(),

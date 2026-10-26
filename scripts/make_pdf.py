@@ -27,7 +27,7 @@ def couple_of(n, log_couple):
     if log_couple and log_couple != '?': return log_couple.replace(' x ', ' × ')
     try: first = open(P('projects', n, 'synopsis.md')).readline()
     except OSError: return 'Other'
-    m = re.search(r'\(([^(),]+?\s[x×]\s[^(),]+?)[,)]', first)
+    m = re.search(r'\(([^(),+]+?\s[x×]\s[^(),+]+?)\s*[,+)]', first)
     return m.group(1).replace(' x ', ' × ').strip() if m else 'Other'
 
 

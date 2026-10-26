@@ -40,7 +40,7 @@ def main():
         cap, songs = parse(n)
         if cap and n not in caps: caps[n] = cap
         first = (open(P('projects', n, 'synopsis.md')).readline() if os.path.exists(P('projects', n, 'synopsis.md')) else '')
-        m = re.search(r'\(([^(),]+?\s[x×]\s[^(),]+?)[,)]', first)
+        m = re.search(r'\(([^(),+]+?\s[x×]\s[^(),+]+?)\s*[,+)]', first)
         couple = m.group(1).replace('×', 'x').strip() if m else COUPLE.get(base(n).split('_')[0], '?')
         for fmt, f in (('image', f'upload/{n}_strip.png'), ('strip_reel', f'upload/{n}_strip_reel.mp4')):
             if (n, fmt) not in have:

@@ -20,7 +20,7 @@ def bare(pid):
 def couple_guess(pid, log_couple=None, title=''):
     """The posting log's couple, else "(A x B)" in the synopsis title, else a COUPLE prefix shortcut, else 'Other'."""
     if log_couple and log_couple != '?': return log_couple
-    m = re.search(r'\(([^(),]+?\s[x×]\s[^(),]+?)[,)]', title or '')
+    m = re.search(r'\(([^(),+]+?\s[x×]\s[^(),+]+?)\s*[,+)]', title or '')
     if m: return m.group(1).replace('×', 'x').strip()
     return COUPLE.get(bare(pid).split('_')[0], 'Other')
 
