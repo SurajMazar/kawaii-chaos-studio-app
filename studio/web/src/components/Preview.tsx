@@ -82,8 +82,9 @@ export default function Preview() {
   useEffect(() => {
     if (!playing || !pid || !edit) return
     const sig = { stop: false }
-    const cur = pbFor(editJson)
-    if (!cur || (cur.state !== 'ready' && cur.state !== 'rendering' && cur.state !== 'queued')) ensurePlayback(editJson, sig)
+    // always poll until ready: the pre-render's own poll is cancelled when Play is pressed, so a render that is still
+    // running must be watched from here or the overlay would freeze at its last percentage
+    if (pbFor(editJson)?.state !== 'ready') ensurePlayback(editJson, sig)
     return () => { sig.stop = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [playing])
