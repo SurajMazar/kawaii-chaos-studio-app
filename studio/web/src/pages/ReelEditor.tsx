@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Alert, App, Button, Card, Checkbox, Empty, InputNumber, Modal, Popconfirm, Result, Segmented, Select, Slider, Space, Spin, Tag, Tooltip, Typography } from 'antd'
+import { Alert, App, Button, Card, Checkbox, Empty, Grid, InputNumber, Modal, Popconfirm, Result, Segmented, Select, Slider, Space, Spin, Tag, Tooltip, Typography } from 'antd'
 import {
   AimOutlined, ArrowDownOutlined, ArrowUpOutlined, BorderOutlined, CaretRightOutlined, DeleteOutlined, PauseOutlined, PlusOutlined,
   SaveOutlined, ScissorOutlined, ThunderboltOutlined, UndoOutlined, VideoCameraOutlined, DownloadOutlined,
@@ -67,6 +67,7 @@ function camEnds(s: SbShot): [CamKey, CamKey] {
 
 export default function ReelEditor({ id }: { id: string }) {
   const { message } = App.useApp()
+  const stacked = Grid.useBreakpoint().lg === false        // < 992 px: preview on top, settings below
   const [info, setInfo] = useState<ReelInfo | null>(null)
   const [item, setItem] = useState<Item | null>(null)
   const [sb, setSb] = useState<Storyboard | null>(null)
@@ -204,19 +205,21 @@ export default function ReelEditor({ id }: { id: string }) {
             <Space><Button type="primary" onClick={makeStoryboard}>Make the storyboard</Button><Button onClick={() => setMode('boxes')}>Check the panel boxes first</Button></Space>
           </Empty></div> :
           <>
-            <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1fr)_380px]">
+            <div className={`flex-1 min-h-0 grid ${stacked ? 'grid-rows-[minmax(320px,55vh)_auto] overflow-y-auto' : 'grid-cols-[minmax(0,1fr)_380px]'}`}>
               <div className="min-h-0 p-4 flex flex-col items-center gap-2" data-tour="re-preview">
-                <div className="relative flex-1 min-h-0 aspect-[9/16] rounded-xl overflow-hidden bg-black ring-1 ring-line shadow-2xl">
-                  {url && <img src={url} className="w-full h-full object-cover" draggable={false} />}
-                  {err && <div className="absolute inset-x-2 bottom-2 rounded bg-red-900/90 p-2 text-xs">{err}</div>}
+                <div className="flex-1 min-h-0 w-full grid place-items-center [container-type:size]">
+                  <div className="relative w-[min(100cqw,calc(100cqh*9/16))] h-[min(100cqh,calc(100cqw*16/9))] rounded-xl overflow-hidden bg-black ring-1 ring-line shadow-2xl">
+                    {url && <img src={url} className="w-full h-full object-cover" draggable={false} />}
+                    {err && <div className="absolute inset-x-2 bottom-2 rounded bg-red-900/90 p-2 text-xs">{err}</div>}
+                  </div>
                 </div>
-                <Space>
+                <Space wrap className="justify-center">
                   <Button type="primary" icon={playing ? <PauseOutlined /> : <CaretRightOutlined />} onClick={() => setPlaying(!playing)}>{playing ? 'Pause' : 'Play'}</Button>
                   <span className="font-mono text-sm opacity-70">{fmt(t)} / {fmt(total)}</span>
                   {job?.state === 'done' || info.upload.reel ? <Button icon={<VideoCameraOutlined />} onClick={() => setVideo(true)}>Watch the built reel</Button> : null}
                 </Space>
               </div>
-              <div className="border-l border-line bg-panel overflow-y-auto" data-tour="re-inspector">
+              <div className={`${stacked ? 'border-t' : 'border-l overflow-y-auto'} border-line bg-panel`} data-tour="re-inspector">
                 {job && <div className="p-3 border-b border-line"><JobPanel job={job} log={log} /></div>}
                 <ReelSettings sb={sb} change={change} total={total} />
                 {shot && <ShotInspector sb={sb} i={sel} change={change} setSel={setSel} imgUrl={imgUrl} setT={setT} />}
@@ -348,7 +351,7 @@ function ShotTimeline({ sb, sel, setSel, t, setT, change, imgUrl, total }: {
   return (
     <div className="shrink-0 border-t border-line bg-panel px-4 pt-2 pb-3 select-none" data-tour="re-timeline">
       <div className="flex items-center gap-3 text-xs opacity-70 mb-1">
-        <span className="label">Timeline</span><span>click a shot to edit it · drag its right edge to change its length · click the ruler to scrub</span>
+        <span className="label">Timeline</span><span className="hidden md:inline truncate">click a shot to edit it · drag its right edge to change its length · click the ruler to scrub</span>
         <span className="ml-auto font-mono">{fmt(total)}</span>
       </div>
       <div ref={ref} className="relative h-[92px]"

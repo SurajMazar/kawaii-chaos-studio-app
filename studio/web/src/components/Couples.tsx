@@ -74,10 +74,10 @@ export default function CouplesEditor() {
               <Typography.Text type="secondary" className="text-xs">Dynamic</Typography.Text>{cell('dynamic', i, r, true)}
             </div>
           </Card>))}</div> :
-        <Table<Row> scroll={{ x: 900 }} size="small" pagination={false} rowKey={(_, i) => String(i)} dataSource={rows ?? []} columns={[
-          { title: 'Couple', width: 190, render: (_, r, i) => cell('name', i, r) },
-          { title: 'Hashtag', width: 150, render: (_, r, i) => cell('tag', i, r) },
-          { title: 'Series', width: 160, render: (_, r, i) => cell('series', i, r) },
+        <Table<Row> scroll={{ x: 1100 }} size="small" pagination={false} rowKey={(_, i) => String(i)} dataSource={rows ?? []} columns={[
+          { title: 'Couple', width: 250, render: (_, r, i) => cell('name', i, r) },
+          { title: 'Hashtag', width: 170, render: (_, r, i) => cell('tag', i, r) },
+          { title: 'Series', width: 210, render: (_, r, i) => cell('series', i, r) },
           { title: 'Looks', render: (_, r, i) => cell('looks', i, r, true) },
           { title: 'Dynamic', render: (_, r, i) => cell('dynamic', i, r, true) },
           { title: '', width: 44, render: (_, __, i) => canEdit && <Popconfirm title="Remove this couple?" description="Projects are not changed." onConfirm={() => { setRows(r => r && r.filter((_, k) => k !== i)); setDirty(true) }}>

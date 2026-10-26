@@ -52,7 +52,8 @@ export default function QATab({ kind, id, reload, goTab }: TabProps) {
                 <List size="small" dataSource={data.targets} renderItem={x => (
                   <List.Item onClick={() => setTarget(x.file)} className={`cursor-pointer !px-2 rounded ${x.file === target ? 'bg-[#2a2431]' : ''}`}>
                     <div className="flex items-center gap-2 w-full">
-                      <img src={api.thumbUrl(kind, id, x.file, 80)} className="w-10 h-10 object-cover rounded" />
+                      {x.sha ? <img src={api.thumbUrl(kind, id, x.file, 80)} className="w-10 h-10 object-cover rounded" />
+                        : <div className="w-10 h-10 rounded bg-[#2a2431] grid place-items-center text-xs opacity-50">?</div>}
                       <span className="text-sm truncate flex-1">{x.file}</span>
                       <Tag color={STATUS[x.status]?.[0]}>{STATUS[x.status]?.[1]}</Tag>
                     </div>
@@ -64,8 +65,10 @@ export default function QATab({ kind, id, reload, goTab }: TabProps) {
           <Col xs={24} xl={9}>
             {t && <Card size="small" title={<Space>{t.file}<Tag color={STATUS[t.status]?.[0]}>{STATUS[t.status]?.[1]}</Tag></Space>}
               extra={<Tooltip title="Side by side with the style master (QA check G)"><Button size="small" icon={<DiffOutlined />} onClick={() => setCmp(true)}>Compare</Button></Tooltip>}>
-              <div className="checker rounded flex justify-center"><Image src={api.fileUrl(kind, id, t.file, ver + 1)} style={{ maxHeight: 'calc(100vh - 380px)' }} /></div>
-              <Typography.Text type="secondary" className="text-xs">Click the picture to zoom every panel at full size. sha1 {t.sha?.slice(0, 12)}</Typography.Text>
+              {t.sha ? <>
+                <div className="checker rounded flex justify-center"><Image src={api.fileUrl(kind, id, t.file, ver + 1)} style={{ maxHeight: 'calc(100vh - 380px)' }} /></div>
+                <Typography.Text type="secondary" className="text-xs">Click the picture to zoom every panel at full size. sha1 {t.sha.slice(0, 12)}</Typography.Text>
+              </> : <Empty description={`There is no ${t.file} yet.`}><Button onClick={() => goTab('pictures')}>Add it in Pictures</Button></Empty>}
               {t.status === 'pass' && <Popconfirm title="Revoke this PASS?" description="The PASS line becomes REVOKED; the reel can't be rebuilt until it passes again."
                 onConfirm={async () => { try { await api.qaRevoke(kind, id, t.file); message.success('Revoked'); await after() } catch (e) { message.error((e as Error).message) } }}>
                 <Button className="!mt-2" danger size="small" icon={<StopOutlined />}>Revoke PASS</Button></Popconfirm>}
@@ -87,7 +90,7 @@ export default function QATab({ kind, id, reload, goTab }: TabProps) {
                   </div>
                 ))}
               </div>
-              <Space className="mt-3" wrap>
+              <Space className="mt-2 pt-3 border-t border-line w-full" wrap>
                 <Popconfirm title={`Mark ${t.file} as PASS?`} description="Every item really passes, judged alone?" disabled={!all} onConfirm={pass}>
                   <Tooltip title={all ? 'Write PASS <sha1> into qa.md' : 'Tick every check first'}><Button type="primary" icon={<CheckCircleFilled />} disabled={!all || t.status === 'pass'}>Mark PASS</Button></Tooltip>
                 </Popconfirm>

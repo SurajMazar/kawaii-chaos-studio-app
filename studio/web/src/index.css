@@ -1,3 +1,5 @@
+/* layer order: Tailwind reset < Ant Design < Tailwind utilities (so className="flex gap-3" on an antd Col works) */
+@layer theme, base, antd, components, utilities;
 @import "tailwindcss";
 
 @theme {

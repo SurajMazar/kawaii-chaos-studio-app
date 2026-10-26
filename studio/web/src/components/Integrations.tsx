@@ -7,7 +7,7 @@ import { usePageTour } from './Tours'
 import type { Backend, StorageConfig, StorageStatus } from '../types'
 
 const BACKENDS: { key: Backend; title: string; icon: React.ReactNode; desc: string }[] = [
-  { key: 'local', title: 'Local folder', icon: <FolderOpenOutlined />, desc: 'Files stay in a folder on this server (today: the repo). Simplest; back the folder up yourself.' },
+  { key: 'local', title: 'Local folder', icon: <FolderOpenOutlined />, desc: 'Files stay in a folder on this computer or server. Simplest; back the folder up yourself.' },
   { key: 's3', title: 'Amazon S3', icon: <CloudOutlined />, desc: 'An S3 bucket in your AWS account.' },
   { key: 'r2', title: 'Cloudflare R2', icon: <CloudServerOutlined />, desc: 'R2 bucket — S3-compatible, no egress fees.' },
   { key: 's3compat', title: 'Other S3-compatible', icon: <ApiOutlined />, desc: 'MinIO, Backblaze B2, Wasabi, DigitalOcean Spaces…' },
@@ -110,8 +110,7 @@ export default function Integrations() {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex justify-end">{button}</div>
-      <Card size="small" title="Storage in use" data-tour="int-status">
+      <Card size="small" title="Storage in use" data-tour="int-status" extra={button}>
         {status?.error ? <Alert type="error" showIcon message="Storage is not available" description={status.error} /> :
           <Descriptions size="small" column={{ xs: 1, md: 2 }} items={[
             { key: 'a', label: 'Now using', children: <b>{status?.active}</b> },
@@ -140,7 +139,7 @@ export default function Integrations() {
           </Form.Item>
           {L('backend') && <Alert type="info" showIcon className="!mb-3" message="The backend is set by the STORAGE_BACKEND environment variable on the server." />}
 
-          {backend === 'local' && field('local_path', 'Folder on the server', 'Absolute path of the folder that holds projects/, music_videos/, upload/… (default: the repo).',
+          {backend === 'local' && field('local_path', 'Folder on the server', 'Absolute path of the folder that holds projects/, music_videos/, upload/… (your content folder).',
             <Input placeholder="/data" />)}
 
           {backend !== 'local' && <>

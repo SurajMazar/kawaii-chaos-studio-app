@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { App, Button, Divider, Input, Modal, Select, Space, Tooltip, Typography } from 'antd'
-import { CopyOutlined, ImportOutlined, RedoOutlined, SaveOutlined, UndoOutlined, QuestionOutlined } from '@ant-design/icons'
+import { App, Button, Divider, Drawer, Grid, Input, Modal, Select, Space, Tooltip, Typography } from 'antd'
+import { CopyOutlined, ImportOutlined, RedoOutlined, SaveOutlined, UndoOutlined, QuestionOutlined, SettingOutlined } from '@ant-design/icons'
 import { useDirty, useStore } from '../store'
 import { clamp, round2, videoEnd } from '../lib'
 import Preview from '../components/Preview'
@@ -33,6 +33,9 @@ export default function LyricEditor({ pid, file }: { pid: string; file?: string 
   const [lrc, setLrc] = useState(false)
   const [help, setHelp] = useState(false)
   const [copyOpen, setCopyOpen] = useState(false)
+  const [sideOpen, setSideOpen] = useState(false)
+  const bp = Grid.useBreakpoint()
+  const wide = bp.xl !== false, phone = bp.md === false      // ≥1200: 4 columns · 768–1199: 3 + drawer · <768: one column
   const [copyName, setCopyName] = useState('lyric_edit_v2.json')
   const [err, setErr] = useState<string | null>(null)
   const S = useStore.getState
@@ -105,12 +108,12 @@ export default function LyricEditor({ pid, file }: { pid: string; file?: string 
   const switchTo = (p: string, f?: string) => { if (!canLeave()) return; go(`/lyric/${p}/${f ?? projects.find(x => x.id === p)?.files[0] ?? 'lyric_edit.json'}`) }
 
   return (
-    <div className="h-full grid grid-rows-[auto_1fr_250px] grid-cols-[minmax(0,1fr)] overflow-hidden">
+    <div className={`h-full grid ${phone ? 'grid-rows-[auto_1fr_200px]' : 'grid-rows-[auto_1fr_250px]'} grid-cols-[minmax(0,1fr)] overflow-hidden`}>
       <PageHeader title={<span className="whitespace-nowrap">Lyric editor</span>}
         back={() => { if (canLeave()) go('/music') }}
-        extra={<Space size={6} wrap={false}>
-          <Select size="middle" value={pid} style={{ width: 190 }} onChange={v => switchTo(v)} options={projects.filter(p => p.files.length).map(p => ({ value: p.id, label: p.id }))} />
-          <Select value={curFile} style={{ width: 170 }} onChange={v => switchTo(pid, v)} options={(proj?.files ?? [curFile]).map(f => ({ value: f, label: f }))} />
+        extra={<Space size={6} wrap className="justify-end">
+          <Select size="middle" value={pid} style={{ width: wide ? 190 : 160 }} onChange={v => switchTo(v)} options={projects.filter(p => p.files.length).map(p => ({ value: p.id, label: p.id }))} />
+          <Select value={curFile} style={{ width: wide ? 170 : 150 }} onChange={v => switchTo(pid, v)} options={(proj?.files ?? [curFile]).map(f => ({ value: f, label: f }))} />
           <Tooltip title="Make a copy of this edit to try ideas"><Button icon={<CopyOutlined />} onClick={() => setCopyOpen(true)}>Copy</Button></Tooltip>
           <Divider type="vertical" />
           <Tooltip title="Undo (⌘Z)"><Button icon={<UndoOutlined />} disabled={!past} onClick={() => S().undo()} /></Tooltip>
@@ -118,16 +121,27 @@ export default function LyricEditor({ pid, file }: { pid: string; file?: string 
           <Tooltip title="Import LRC: paste [mm:ss.xx] timings from an .lrc file"><Button icon={<ImportOutlined />} onClick={() => setLrc(true)}><span className="hidden 2xl:inline">Import LRC</span><span className="2xl:hidden">LRC</span></Button></Tooltip>
           <Typography.Text type={dirty ? 'warning' : 'secondary'} className="text-xs w-16 text-right whitespace-nowrap">{dirty ? '● unsaved' : 'saved'}</Typography.Text>
           <Button type="primary" icon={<SaveOutlined />} disabled={!dirty} onClick={() => S().save()} data-tour="ly-save">Save</Button>
+          {!wide && <Button icon={<SettingOutlined />} onClick={() => setSideOpen(true)}>Render & look</Button>}
           <Tooltip title="Keyboard shortcuts (?)"><Button icon={<QuestionOutlined />} onClick={() => setHelp(true)} /></Tooltip>
           {button}
         </Space>} />
 
-      <main className="grid grid-cols-[230px_310px_minmax(0,1fr)_300px] 2xl:grid-cols-[280px_360px_minmax(0,1fr)_340px] min-h-0 min-w-0">
-        <aside className="bg-panel border-r border-line min-h-0" data-tour="ly-lines"><LineList /></aside>
-        <section className="bg-panel/60 border-r border-line min-h-0 flex flex-col" data-tour="ly-editor"><LineEditor /></section>
-        <section className="min-h-0 p-4" data-tour="ly-preview"><Preview /></section>
-        <aside className="bg-panel border-l border-line min-h-0" data-tour="ly-side"><Side /></aside>
-      </main>
+      {phone ? (
+        <main className="min-h-0 overflow-y-auto">
+          <section className="h-[62vh] p-3" data-tour="ly-preview"><Preview /></section>
+          <section className="bg-panel/60 border-y border-line flex flex-col" data-tour="ly-editor"><LineEditor /></section>
+          <aside className="bg-panel h-[50vh]" data-tour="ly-lines"><LineList /></aside>
+        </main>
+      ) : (
+        <main className={`grid ${wide ? 'grid-cols-[230px_310px_minmax(0,1fr)_300px] 2xl:grid-cols-[280px_360px_minmax(0,1fr)_340px]' : 'grid-cols-[210px_290px_minmax(0,1fr)]'} min-h-0 min-w-0`}>
+          <aside className="bg-panel border-r border-line min-h-0" data-tour="ly-lines"><LineList /></aside>
+          <section className="bg-panel/60 border-r border-line min-h-0 flex flex-col" data-tour="ly-editor"><LineEditor /></section>
+          <section className="min-h-0 p-4" data-tour="ly-preview"><Preview /></section>
+          {wide && <aside className="bg-panel border-l border-line min-h-0" data-tour="ly-side"><Side /></aside>}
+        </main>
+      )}
+      {!wide && <Drawer open={sideOpen} onClose={() => setSideOpen(false)} title="Render & look" width={Math.min(380, window.innerWidth - 24)}
+        styles={{ body: { padding: 0 } }}><div className="h-full" data-tour="ly-side"><Side /></div></Drawer>}
 
       <div data-tour="ly-timeline" className="min-h-0"><Timeline /></div>
 

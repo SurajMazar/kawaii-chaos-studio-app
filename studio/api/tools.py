@@ -89,9 +89,9 @@ TOOLS = [
          args=[dict(name='out', label='Save as', default='upload/comics_book.pdf', kind='path')]),
     dict(key='style_check', script='style_check.py', title='Style check a picture', icon='eye',
          desc='Puts the master style crop next to the picture\'s characters at the same scale, to judge the style by eye.',
-         args=[dict(name='image', label='Picture (repo path)', default='', kind='image', required=True)]),
+         args=[dict(name='image', label='Picture (path in your content folder)', default='', kind='image', required=True)]),
     dict(key='upload_encode', script='upload_encode.py', title='Small upload copies (<10 MB)', icon='compress',
-         desc='Re-encodes rendered reels to Instagram-web-friendly copies (2-pass H.264, ~9.3 MB) in projects/upload/.',
+         desc='Re-encodes rendered reels to Instagram-web-friendly copies (2-pass H.264, ~9.3 MB) in upload/.',
          args=[dict(name='projects', label='Only these projects (space separated, empty = all)', default='', kind='list')]),
     dict(key='build_missing', script='build_missing.sh', title='Build every missing strip reel', icon='video',
          desc='Builds a silent strip reel for each strip that has strip.png but no upload copy yet (QA-PASS only), then updates the trackers.', args=[]),
@@ -173,7 +173,7 @@ def run_tool(key: str, args: dict = Body(default={}, embed=True)):
         for n in names:
             if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_\-]{0,80}', n): raise HTTPException(400, f'bad project name {n}')
         cmd += names
-        sync = dict(pull=['projects/*/reel.mp4', 'projects/*/strip_reel/strip_reel.mp4'], push=['projects/upload/*'], scope='global')
+        sync = dict(pull=['projects/*/reel.mp4', 'projects/*/strip_reel/strip_reel.mp4'], push=['upload/*'], scope='global')
     elif key == 'update_trackers':
         for n in ('captions.json', 'posting_log.json', 'README.md'): backup(ROOT / n)
         sync = TRACKER_SYNC

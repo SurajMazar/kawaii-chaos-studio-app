@@ -27,7 +27,7 @@ export default function MusicVideos() {
       <div className="flex-1 overflow-auto p-5">
         {!items ? <Skeleton active /> : items.length === 0 ? <Empty description="No music videos yet." /> : <>
           <Space className="mb-3"><Input.Search allowClear placeholder="Search…" value={q} onChange={e => setQ(e.target.value)} style={{ width: 260 }} />
-            <Typography.Text type="secondary">{rows.length} folders</Typography.Text></Space>
+            <Typography.Text type="secondary">{rows.length} {rows.length === 1 ? 'folder' : 'folders'}</Typography.Text></Space>
           <div data-tour="mv-table">
             <Table<Item> size="middle" scroll={{ x: 760 }} rowKey="id" dataSource={rows} pagination={false}
               columns={[

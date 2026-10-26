@@ -28,7 +28,7 @@ const STRIP_STEPS: StepDef[] = [
   { key: 'layout', title: 'Layout', done: i => !!i.status.layout, hint: 'Random panel layout (optional for your own art)' },
   { key: 'prompt', title: 'Prompt', done: i => !!i.texts?.['prompt_final.txt'] || !!i.status.strip, hint: 'Prompt + reference board for ChatGPT (skip if you draw it yourself)' },
   { key: 'pictures', title: 'Pictures', done: i => !!i.status.strip, hint: 'Import or upload the strip, choose the final strip.png' },
-  { key: 'qa', title: 'QA', done: i => i.status.qa === 'pass' || i.status.qa === 'nofile', hint: 'Check every item, then Mark PASS' },
+  { key: 'qa', title: 'QA', done: i => i.status.qa === 'pass', hint: 'Check every item, then Mark PASS' },
   { key: 'reel', title: 'Reel', done: i => !!i.status.reel, hint: 'Build the silent strip reel' },
   { key: 'post', title: 'Post', done: i => !!i.status.posted, hint: 'Caption, song, mark as posted' },
 ]
@@ -54,7 +54,7 @@ export default function PiecePage({ kind, id, tab }: { kind: Kind; id: string; t
   const steps = kind === 'strip' ? (own ? OWN_STEPS : STRIP_STEPS) : MV_STEPS
   const bp = Grid.useBreakpoint()
   const phone = bp.md === false
-  const compactSteps = bp.lg === false               // < 992 px: the 6–7 steps do not fit in one row
+  const compactSteps = bp.xl === false               // < 1200 px: the 6–7 steps with their hints do not fit in one row
   const firstOpen = item ? steps.find(s => !s.done(item))?.key ?? 'post' : 'script'
   const active = tab ?? firstOpen
   const goTab = (t: string) => { if (t !== active && canLeave()) go(`/p/${kind}/${id}/${t}`) }

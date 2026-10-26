@@ -58,6 +58,7 @@ export default function Dashboard() {
   const [type, setType] = useState<string>(() => sessionStorage.getItem('kcs.lib.type') ?? 'all')
   const [couple, setCouple] = useState<string>(() => sessionStorage.getItem('kcs.lib.couple') ?? 'all')
   const [filter, setFilter] = useState<Filter>(() => (sessionStorage.getItem('kcs.lib.filter') as Filter) ?? 'all')
+  const [allCouples, setAllCouples] = useState(false)
   const [sort, setSort] = useState<string>(() => sessionStorage.getItem('kcs.lib.sort') ?? 'newest')
   const { message } = App.useApp()
   const canEdit = useCan('editor')
@@ -114,9 +115,10 @@ export default function Dashboard() {
           <Col xs={12} lg={4}><Card size="small"><Statistic title="Posts marked posted" value={st.posted + st.mv_posted} suffix={<span className="text-xs opacity-60">({st.mv_posted} videos)</span>} /></Card></Col>
           <Col xs={12} lg={4}><Card size="small"><Statistic title="Ready, not posted yet" value={st.ready} valueStyle={{ color: '#ffd84d' }} /></Card></Col>
           <Col xs={12} lg={4}><Card size="small"><Statistic title="Strip reels built" value={st.reels} suffix={`/ ${st.strips_done}`} /></Card></Col>
-          <Col xs={24} lg={8}><Card size="small" title={<span className="text-sm">Posts per couple</span>} styles={{ body: { maxHeight: 92, overflowY: 'auto', paddingTop: 6 } }}>
-            {st.per_couple.map(c => (
-              <div key={c.couple} className="flex items-center gap-2 text-xs cursor-pointer" onClick={() => setCouple(c.couple)} title="filter by this couple">
+          <Col xs={24} lg={8}><Card size="small" title={<span className="text-sm">Posts per couple</span>} styles={{ body: { paddingTop: 6, paddingBottom: 6 } }}
+            extra={st.per_couple.length > 4 && <Button size="small" type="link" className="!px-0" onClick={() => setAllCouples(v => !v)}>{allCouples ? 'show less' : `show all ${st.per_couple.length}`}</Button>}>
+            {(allCouples ? st.per_couple : st.per_couple.slice(0, 4)).map(c => (
+              <div key={c.couple} className="flex items-center gap-2 text-xs cursor-pointer h-5" onClick={() => setCouple(c.couple)} title="filter by this couple">
                 <span className="w-32 truncate">{c.couple}</span>
                 <Progress className="flex-1 !m-0" size="small" showInfo={false} percent={100 * (c.posted + c.ready) / Math.max(1, ...st.per_couple.map(x => x.posted + x.ready))}
                   success={{ percent: 100 * c.posted / Math.max(1, ...st.per_couple.map(x => x.posted + x.ready)) }} />

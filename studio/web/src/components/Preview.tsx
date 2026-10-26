@@ -129,7 +129,8 @@ export default function Preview() {
 
   return (
     <div className="flex flex-col items-center gap-2 h-full min-h-0">
-      <div className="relative h-full min-h-0 aspect-[9/16] rounded-xl overflow-hidden bg-black shadow-2xl ring-1 ring-line">
+      <div className="flex-1 min-h-0 w-full grid place-items-center [container-type:size]">
+      <div className="relative w-[min(100cqw,calc(100cqh*9/16))] h-[min(100cqh,calc(100cqw*16/9))] rounded-xl overflow-hidden bg-black shadow-2xl ring-1 ring-line">
         {url && <img src={url} className="w-full h-full object-cover select-none" draggable={false} />}
         {ready && <video ref={videoRef} src={ready} muted playsInline preload="auto" className="absolute inset-0 w-full h-full object-cover bg-black" />}
         {preparing && <div className="absolute inset-0 grid place-items-center bg-black/55 text-center p-4">
@@ -145,6 +146,7 @@ export default function Preview() {
         </>}
         {busy && !playing && <div className="absolute top-2 right-2 size-2 rounded-full bg-sun animate-pulse" />}
         {err && <div className="absolute inset-x-2 bottom-2 rounded bg-red-900/90 p-2 text-xs">{err}</div>}
+      </div>
       </div>
       <div className="flex flex-wrap justify-center items-center gap-x-2 gap-y-1 text-sm">
         <Button type="primary" className="w-24" icon={playing ? <PauseOutlined /> : <CaretRightOutlined />} onClick={() => setPlaying(!playing)}>{playing ? 'Pause' : 'Play'}</Button>

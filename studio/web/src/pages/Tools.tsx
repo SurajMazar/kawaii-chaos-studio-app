@@ -47,7 +47,7 @@ function ToolCard({ t }: { t: Tool }) {
     <Card size="small" title={<Space>{ICONS[t.icon]}{t.title}</Space>} data-tour={`tool-${t.key}`} extra={<Typography.Text type="secondary" className="text-xs">{t.script}</Typography.Text>}>
       <Typography.Paragraph type="secondary">{t.desc}</Typography.Paragraph>
       {t.args.map(a => <div key={a.name} className="mb-2"><span className="label">{a.label}</span>
-        <Input value={args[a.name]} onChange={e => setArgs(s => ({ ...s, [a.name]: e.target.value }))} placeholder={a.kind === 'image' ? 'projects/166_rem_emilia_heatwave/strip.png' : ''} /></div>)}
+        <Input value={args[a.name]} onChange={e => setArgs(s => ({ ...s, [a.name]: e.target.value }))} placeholder={a.kind === 'image' ? 'projects/001_rainy_day/strip.png' : ''} /></div>)}
       {HEAVY.has(t.key) ? <Popconfirm title={`Run "${t.title}"?`} description="This can change many files (backups are kept for the tracker files)." onConfirm={run}>{runBtn}</Popconfirm> : runBtn}
       {job && <div className="mt-3"><JobPanel job={job} log={log} /></div>}
       {res?.download ? <Button className="!mt-2" icon={<DownloadOutlined />} href={api.rootUrl(String(res.download), true)}>Download {String(res.download).split('/').pop()}</Button> : null}

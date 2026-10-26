@@ -33,19 +33,21 @@ export default function ReelTab({ id, item, reload, goTab }: TabProps) {
             <Popconfirm title="Build automatically?" description="Panels are found again and the timing is reset to the defaults — edits made in the Reel editor are replaced." onConfirm={build} disabled={!qaOk || running}>
               <Tooltip title="Find the panels, make the storyboard, render and encode — about 2 minutes"><Button type="primary" icon={<ThunderboltOutlined />} block disabled={!qaOk || running}>Build reel (automatic)</Button></Tooltip>
             </Popconfirm>
-            <Button icon={<VideoCameraOutlined />} block onClick={() => go(`/reel/${id}`)}>Open the reel editor (fix panels, timing, camera)</Button>
+            <Button icon={<VideoCameraOutlined />} block className="!h-auto !whitespace-normal !py-1.5" onClick={() => go(`/reel/${id}`)}>Open the reel editor (fix panels, timing, camera)</Button>
           </Space>
           {job && <div className="mt-3"><JobPanel job={job} log={log} /></div>}
         </Card>
         <Card size="small" className="!mt-3" title="Upload files (upload/)">
           {!reel && !img ? <Empty description="Nothing built yet." /> :
             <Descriptions size="small" column={1} items={[
-              ...(reel ? [{ key: 'r', label: 'Reel', children: <Space wrap><span>{(reel.size / 1e6).toFixed(1)} MB · {new Date(reel.mtime * 1000).toLocaleString()}</span>
-                <Button size="small" icon={<DownloadOutlined />} href={api.rootUrl(reel.path, true)}>Download</Button>
-                <Tooltip title="Copy into your export folder (Settings)"><Button size="small" icon={<ExportOutlined />} onClick={() => exp(reel.path)}>Export</Button></Tooltip></Space> }] : []),
-              ...(img ? [{ key: 'i', label: 'Strip image', children: <Space wrap><span>{(img.size / 1e6).toFixed(1)} MB</span>
-                <Button size="small" icon={<DownloadOutlined />} href={api.rootUrl(img.path, true)}>Download</Button>
-                <Button size="small" icon={<ExportOutlined />} onClick={() => exp(img.path)}>Export</Button></Space> }] : []),
+              ...(reel ? [{ key: 'r', label: 'Reel', children: <div className="flex flex-col gap-1.5">
+                <span>{(reel.size / 1e6).toFixed(1)} MB · {new Date(reel.mtime * 1000).toLocaleString()}</span>
+                <Space size={6} wrap><Button size="small" icon={<DownloadOutlined />} href={api.rootUrl(reel.path, true)}>Download</Button>
+                  <Tooltip title="Copy into your export folder (Settings)"><Button size="small" icon={<ExportOutlined />} onClick={() => exp(reel.path)}>Export</Button></Tooltip></Space></div> }] : []),
+              ...(img ? [{ key: 'i', label: 'Strip image', children: <div className="flex flex-col gap-1.5">
+                <span>{(img.size / 1e6).toFixed(1)} MB</span>
+                <Space size={6} wrap><Button size="small" icon={<DownloadOutlined />} href={api.rootUrl(img.path, true)}>Download</Button>
+                  <Button size="small" icon={<ExportOutlined />} onClick={() => exp(img.path)}>Export</Button></Space></div> }] : []),
             ]} />}
           <Typography.Paragraph type="secondary" className="!mt-2 !mb-0 text-xs">Post the reel from the Instagram <b>app</b>: + → Reel → pick the video → Audio → search the song → original audio to 0 → caption → Share to Facebook OFF.</Typography.Paragraph>
           {reel && <Button type="link" className="!px-0" onClick={() => goTab('post')}>Next: caption & post →</Button>}

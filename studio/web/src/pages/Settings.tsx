@@ -53,11 +53,10 @@ function DefaultsTab() {
 
   return (
     <>
-      <div className="flex justify-end mb-3">{button}</div>
       <div>
         <Row gutter={16}>
           <Col xs={24} xl={13}>
-            <Card size="small" title="Defaults" data-tour="set-form" extra={!isAdmin && <Typography.Text type="secondary" className="text-xs">only admins can change these</Typography.Text>}>
+            <Card size="small" title="Defaults" data-tour="set-form" extra={<Space>{!isAdmin && <Typography.Text type="secondary" className="text-xs">only admins can change these</Typography.Text>}{button}</Space>}>
               <Form form={form} layout="vertical" disabled={!isAdmin} onFinish={async v => { try { const saved = await api.saveSettings(v); form.setFieldsValue(saved); setAppSettings(saved); message.success('Settings saved') } catch (e) { message.error((e as Error).message) } }}>
                 <div className="grid grid-cols-2 gap-x-4">
                   <Form.Item name="handle" label="Instagram handle"><Input placeholder="@your.account" /></Form.Item>

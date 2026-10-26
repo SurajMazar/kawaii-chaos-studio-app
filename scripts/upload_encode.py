@@ -4,14 +4,14 @@
     python3 scripts/upload_encode.py            # every projects/*/reel.mp4 and */strip_reel/strip_reel.mp4
     python3 scripts/upload_encode.py news wfh   # only these projects
 
-Writes projects/upload/<project>.mp4 and projects/upload/<project>_strip_reel.mp4 (2-pass H.264, ~9.3 MB budget).
+Writes upload/<project>.mp4 and upload/<project>_strip_reel.mp4 (2-pass H.264, ~9.3 MB budget).
 Skips outputs that are newer than their source. Stand-alone strip reels in projects/comics/strip_reels/<name>/ are
-written as projects/upload/strip_<name>.mp4.
+written as upload/strip_<name>.mp4.
 """
 import glob, os, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT = os.path.join(ROOT, 'projects', 'upload')
+OUT = os.path.join(ROOT, 'upload')
 BUDGET = 9.3e6  # bytes
 
 

@@ -95,7 +95,7 @@ export default function Timeline() {
     <div className="flex flex-col h-full min-w-0 bg-panel border-t border-line select-none">
       <div className="flex items-center gap-3 px-3 py-1.5 text-xs text-muted border-b border-line">
         <span className="label">Timeline</span>
-        <span>drag a lyric to move · drag its edges to retime (joined neighbours move too) · drag ✂ cut points · click to scrub</span>
+        <span className="hidden md:inline truncate">drag a lyric to move · drag its edges to retime (joined neighbours move too) · drag ✂ cut points · click to scrub</span>
         <span className="ml-auto">zoom</span>
         <Slider className="!my-0 w-32" min={10} max={260} value={px} onChange={v => setPx(v)} tooltip={{ open: false }} />
         <Button size="small" onClick={() => setPx(Math.max(10, (scroller.current!.clientWidth - 20) / (tMax - tMin)))}>fit</Button>
