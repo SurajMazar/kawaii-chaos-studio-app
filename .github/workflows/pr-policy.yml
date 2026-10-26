@@ -12,7 +12,8 @@ permissions:
 jobs:
   close-outside-prs:
     if: github.event.pull_request.user.login != github.repository_owner
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
       - name: Close with a friendly note
         env:
