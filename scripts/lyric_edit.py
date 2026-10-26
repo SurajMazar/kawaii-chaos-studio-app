@@ -228,12 +228,15 @@ def load(raw, base, scale=1.0, fps=None):
             ImageDraw.Draw(layer).text(((W - tw) / 2 + jit.uniform(-1.5, 1.5) * sc, H * 0.46 + jit.uniform(-1.5, 1.5) * sc), cfg['signature'], font=ft, fill=(255, 255, 255, int(255 * p)))
             fr.alpha_composite(layer); return fr
         act = [l for l in lines if l['start'] <= st < l['end']]
-        sh = max([x for x in shots if x['t'] <= st] or shots[:1], key=lambda x: x['t'])
-        fr = picture(sh, st, f); lt = st - sh['t']
-        if sh['k'] > 0 and sh['cut'] == 'ghost' and 0 <= lt < 0.3:            # ghost crossfade between pictures
-            pv = shots[sh['k'] - 1]; fr = Image.blend(picture(pv, pv['end'], f), fr, ease_out(lt / 0.3))
-        if sh['cut'] == 'flash' and 0 <= lt < 0.2:                            # white flash cut
-            fr.alpha_composite(Image.new('RGBA', (W, H), (255, 255, 255, int(235 * (1 - ease_out(lt / 0.2))))))
+        if not shots:                                                          # no pictures yet: plain background
+            fr = Image.new('RGBA', (W, H), (24, 20, 28, 255))
+        else:
+            sh = max([x for x in shots if x['t'] <= st] or shots[:1], key=lambda x: x['t'])
+            fr = picture(sh, st, f); lt = st - sh['t']
+            if sh['k'] > 0 and sh['cut'] == 'ghost' and 0 <= lt < 0.3:        # ghost crossfade between pictures
+                pv = shots[sh['k'] - 1]; fr = Image.blend(picture(pv, pv['end'], f), fr, ease_out(lt / 0.3))
+            if sh['cut'] == 'flash' and 0 <= lt < 0.2:                        # white flash cut
+                fr.alpha_composite(Image.new('RGBA', (W, H), (255, 255, 255, int(235 * (1 - ease_out(lt / 0.2))))))
         if st > last - 0.4: fr = Image.blend(fr, Image.new('RGBA', (W, H), (12, 10, 14, 255)), ease_out((st - (last - 0.4)) / 0.4))
         jit = random.Random(f // 4); jt = 1.2 * cfg['boil_text']                # subtle hand-lettering jitter (pictures stay still)
         for l in act:

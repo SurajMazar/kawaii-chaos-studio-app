@@ -7,7 +7,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 STUDIO = Path(__file__).resolve().parent
-CODE_ROOT = STUDIO.parent                      # repo root: scripts/, studio/, default fonts/
+# repo root: scripts/, studio/, default fonts/, starter/ (the Mac app points it at its bundled copy)
+CODE_ROOT = Path(os.environ['STUDIO_CODE_ROOT']).resolve() if os.environ.get('STUDIO_CODE_ROOT') else STUDIO.parent
 
 
 def env(name: str, default: str = '') -> str:

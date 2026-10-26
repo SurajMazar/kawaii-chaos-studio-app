@@ -21,7 +21,8 @@ from .context import current_user, request_id
 
 log = logging.getLogger('studio.http')
 SAFE_METHODS = {'GET', 'HEAD', 'OPTIONS'}
-PUBLIC_API = {'/api/health', '/api/ready', '/api/auth/state', '/api/auth/login', '/api/auth/setup', '/api/auth/logout'}
+PUBLIC_API = {'/api/health', '/api/ready', '/api/auth/state', '/api/auth/login', '/api/auth/setup', '/api/auth/logout',
+              '/api/auth/desktop'}   # Mac app only (needs the per-launch secret; 404 everywhere else)
 SESSION_COOKIES = ('__Host-kcs_session', 'kcs_session')
 CSRF_COOKIES = ('__Host-kcs_csrf', 'kcs_csrf')
 CSRF_HEADER = 'x-csrf-token'

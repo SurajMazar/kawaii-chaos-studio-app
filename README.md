@@ -19,9 +19,21 @@ Made for chibi fan-comic accounts, but nothing in it is tied to one series, coup
 | **Your own way** | Your drawings, fonts, songs and checklist. ChatGPT steps are optional (Settings → *Where do the pictures come from?*). |
 | **Team & server** | Accounts with roles (viewer / editor / admin), optional two-factor sign-in, storage on the local disk, Amazon S3, Cloudflare R2 or any S3-compatible service, Docker. |
 
-## Quick start (your own computer)
+## Mac app (easiest)
 
-You need **Python 3.11+**, **Node.js 20 LTS or newer** and **ffmpeg** (macOS: `brew install python node ffmpeg`;
+Download **`Kawaii-Chaos-Studio-<version>-mac-arm64.dmg`** from [Releases](../../releases), open it and drag the app
+into Applications. It needs macOS 12+ on Apple Silicon (M1 or newer). Nothing else to install — ffmpeg is included.
+
+- **First open:** the app is not notarized by Apple yet, so macOS warns. Right-click the app → **Open** → **Open**
+  (macOS 15+: try to open it once, then System Settings → Privacy & Security → **Open Anyway**).
+- **No account, no password:** the app signs you in by itself and only listens on your own Mac.
+- **Your comics** are plain files in `Documents/Kawaii Chaos Studio/`; the app's local database (SQLite), settings and
+  logs are in `~/Library/Application Support/Kawaii Chaos Studio/`.
+- **Move projects** between Macs or friends: a project's **Export** button makes a `.zip`; **Library → Import** adds it.
+
+## Run from source (macOS, Linux, Windows with WSL)
+
+You need **Python 3.11+**, **Node.js 24 LTS** (24.22.1 or newer; see `.nvmrc`) and **ffmpeg** (macOS: `brew install python node ffmpeg`;
 Ubuntu: `sudo apt install python3-venv nodejs npm ffmpeg`).
 
 ```bash
@@ -81,6 +93,29 @@ Every page and tab is described in [studio/README.md](studio/README.md).
 - Render scripts: `scripts/` (Python + ffmpeg), runnable on their own too.
 - Tests: `cd studio && .venv/bin/pip install -r requirements-dev.txt && .venv/bin/python -m pytest tests`
   (they use throw-away folders, never your content). Lint: `ruff check .`, `npx eslint src`.
+
+### Building the Mac app yourself
+
+```bash
+cd studio/web && npm ci && npm run build && cd ../..
+python3 -m venv .venv-app && .venv-app/bin/pip install -r studio/requirements.txt -r desktop/requirements.txt
+.venv-app/bin/python desktop/make_icon.py
+.venv-app/bin/pyinstaller --noconfirm --distpath desktop/dist --workpath desktop/build/pyi desktop/kawaii.spec
+"desktop/dist/Kawaii Chaos Studio.app/Contents/MacOS/Kawaii Chaos Studio" --selftest   # builds a test reel, exits 0 when OK
+```
+
+Releases are built by GitHub Actions ([release.yml](.github/workflows/release.yml)) when a version tag is pushed
+(`git tag v0.2.0 && git push origin v0.2.0`): tests, app build, the self-test, then the `.dmg` and its checksum are
+attached to the release.
+
+## Contributing
+
+Issues and forks are welcome; pull requests are only accepted from the maintainer — see
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Licence
+
+[MIT](LICENSE). Bundled third-party software (FFmpeg in the Mac app, fonts, libraries): [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Fan art
 

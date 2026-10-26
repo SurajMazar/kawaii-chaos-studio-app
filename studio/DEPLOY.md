@@ -234,7 +234,7 @@ Sessions are not affected (they are random tokens, not signed with this key).
 
 ## 9. CI
 
-`studio/ci/github-workflow-studio.yml` runs ruff, bandit, pip-audit, pytest (with moto S3), eslint, the TypeScript build,
+`.github/workflows/ci.yml` runs ruff, bandit, pip-audit, pytest (with moto S3), eslint, the TypeScript build,
 `npm audit --audit-level=high` and a Docker build + smoke test. Enable it by moving it to `.github/workflows/studio.yml`
 (pushing workflow files needs a token with the `workflow` scope: `gh auth refresh -s workflow`).
 

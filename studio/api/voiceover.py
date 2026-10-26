@@ -7,7 +7,7 @@ The voice cast (which ElevenLabs voice each character speaks with) is voices.jso
 Lines are made with the ElevenLabs API (Settings → Integrations → ElevenLabs; the key is stored encrypted like the storage
 secret and never sent to the browser) or recorded on the ElevenLabs website and uploaded.
 """
-import json, os, re, subprocess, tempfile, threading, time  # nosec B404 - argument lists only
+import json, os, re, tempfile, threading, time  # nosec B404 - argument lists only
 import urllib.error, urllib.parse, urllib.request
 from pathlib import Path
 
@@ -294,9 +294,8 @@ def duration(p) -> float | None:
     except (FileNotFoundError, OSError): return None
     if k in _DUR: return _DUR[k]
     try:
-        out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', str(p.local())],  # nosec B603 B607
-                             capture_output=True, text=True, timeout=20).stdout.strip()
-        d = round(float(out), 3)
+        from media_info import duration as media_duration      # scripts/ (ffprobe, or ffmpeg alone in the Mac app)
+        d = round(media_duration(p.local()), 3)
     except Exception: d = None
     if len(_DUR) > 5000: _DUR.clear()
     _DUR[k] = d

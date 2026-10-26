@@ -19,3 +19,6 @@ studio/settings.json
 .env
 .env.*
 !.env.example
+# Mac app build output
+desktop/build/
+desktop/dist/

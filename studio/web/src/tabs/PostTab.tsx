@@ -81,7 +81,7 @@ export default function PostTab({ kind, id, reload }: TabProps) {
           </Form>
         </Card>
         <Card size="small" title="Posting history" className="!mt-3">
-          <Table<PostEntry> size="small" rowKey={r => r.format + (r.date ?? '')} dataSource={info.posts} pagination={false}
+          <Table<PostEntry> size="small" scroll={{ x: 640 }} rowKey={r => r.format + (r.date ?? '')} dataSource={info.posts} pagination={false}
             locale={{ emptyText: 'Not in posting_log.json yet.' }}
             columns={[
               { title: 'Format', dataIndex: 'format' },

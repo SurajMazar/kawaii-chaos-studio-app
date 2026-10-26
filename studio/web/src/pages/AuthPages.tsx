@@ -158,6 +158,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   if (loading) return <div className="h-full flex items-center justify-center"><Spin size="large" /></div>
   if (error || !state) return <Result status="warning" title="The Studio server is not running" subTitle="Start it with studio/run.sh, then reload this page."
     extra={<Button onClick={() => refresh()}>Try again</Button>} />
+  if (state.desktop && !state.user) return <Result status="info" title="Please reopen the app" subTitle="Close Kawaii Chaos Studio and open it again — it signs you in by itself." />
   if (state.setup_required) return <SetupPage tokenRequired={state.setup_token_required} />
   if (!state.user && wasIn.current) return <>
     {children}

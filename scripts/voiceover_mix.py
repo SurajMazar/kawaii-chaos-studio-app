@@ -22,9 +22,9 @@ SR = 48000
 
 
 def duration(path):
-    out = subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', path],  # nosec B603 B607
-                         capture_output=True, text=True, check=True).stdout.strip()
-    return float(out)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from media_info import duration as d
+    return d(path)
 
 
 def inside(base, rel):

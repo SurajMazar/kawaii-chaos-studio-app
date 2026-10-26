@@ -87,7 +87,7 @@ export default function VoiceCastDrawer({ open, onClose, cast, onSaved, eleven }
       {!eleven && <Alert className="!mb-3" type="info" showIcon message="ElevenLabs is not connected"
         description="You can still write the cast by voice name. To pick voices from your account and make lines here, an admin adds the API key in Settings → Integrations → ElevenLabs." />}
       <Space className="mb-3"><span>Model for new lines</span><Select className="!w-[420px]" value={model} options={models} onChange={v => { setModel(v); setDirty(true) }} /></Space>
-      <Table<CastMember> size="small" pagination={false} rowKey={(_, i) => String(i)} dataSource={rows}
+      <Table<CastMember> size="small" scroll={{ x: 820 }} pagination={false} rowKey={(_, i) => String(i)} dataSource={rows}
         columns={[
           { title: 'Character', width: 150, render: (_, r, i) => <Input value={r.name} disabled={!canEdit} onChange={e => set(i, { name: e.target.value })} /> },
           { title: 'Series', width: 120, render: (_, r, i) => <Input value={r.series} disabled={!canEdit} onChange={e => set(i, { series: e.target.value })} /> },

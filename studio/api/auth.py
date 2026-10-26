@@ -1,8 +1,10 @@
 """Sign-in, first-run setup, sessions, password change and optional TOTP two-factor sign-in."""
 import logging
+import os
 import secrets
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
 from .deps import authorize
 
 from config import CONFIG
@@ -66,7 +68,32 @@ def state(request: Request, response: Response):
     setup = st.count_users() == 0
     return dict(setup_required=setup, setup_token_required=bool(setup and SETUP['token']),
                 user=st.public_user(user) if user else None, csrf=csrf, env=CONFIG.env,
-                local_features=CONFIG.local_features, two_factor_available=st.fernet is not None)
+                local_features=CONFIG.local_features, two_factor_available=st.fernet is not None, desktop=bool(desktop_token()))
+
+
+DESKTOP_EMAIL = 'me@desktop.local'
+
+
+def desktop_token() -> str:
+    """Set by the Mac app for this launch only (a random secret it opens the window with)."""
+    return os.environ.get('STUDIO_DESKTOP_TOKEN', '')
+
+
+@router.get('/api/auth/desktop')
+@public_route
+def desktop_signin(request: Request, token: str = ''):  # nosec B107 - the launch secret arrives in the query; '' = not given
+    """Mac app: the window opens this URL with the launch secret and is signed in as the local owner — no password.
+    Without STUDIO_DESKTOP_TOKEN (servers, run.sh) the route does not exist."""
+    want = desktop_token()
+    if not want or not A.consteq(token, want): raise HTTPException(404, 'Not Found')
+    st = A.store()
+    u = st.user_by_email(DESKTOP_EMAIL)
+    if not u:
+        try: u = st.create_user(DESKTOP_EMAIL, secrets.token_urlsafe(32) + 'Aa1!', 'admin', 'Me')
+        except A.AuthError as e: _err(e)
+    resp = RedirectResponse('/', status_code=303)
+    _login_response(request, resp, u)
+    return resp
 
 
 @router.post('/api/auth/setup')

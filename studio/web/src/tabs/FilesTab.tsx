@@ -27,7 +27,7 @@ export default function FilesTab({ kind, id }: TabProps) {
         <Breadcrumb items={[{ title: <a onClick={() => setDir('')}>{id}</a> }, ...crumbs.map((c, i) => ({ title: <a onClick={() => setDir(crumbs.slice(0, i + 1).join('/'))}>{c}</a> }))]} />
         <Typography.Text type="secondary" className="text-xs">Everything in {kind === 'strip' ? 'projects' : 'music_videos'}/{id}/{dir}. Click a folder to open it, a file to look at it.</Typography.Text>
       </Space>
-      <Table<FileEntry> size="small" loading={!rows} dataSource={rows ?? []} rowKey="path" pagination={{ pageSize: 50, hideOnSinglePage: true }}
+      <Table<FileEntry> size="small" scroll={{ x: 560 }} loading={!rows} dataSource={rows ?? []} rowKey="path" pagination={{ pageSize: 50, hideOnSinglePage: true }}
         onRow={r => ({ onDoubleClick: () => open(r) })}
         columns={[
           { title: 'Name', dataIndex: 'name', render: (n, r) => <a onClick={() => open(r)} className="flex items-center gap-2">{ICON[r.kind] ?? ICON.other}<span>{n}</span></a>, sorter: (a, b) => a.name.localeCompare(b.name) },

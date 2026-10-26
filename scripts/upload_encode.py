@@ -16,8 +16,8 @@ BUDGET = 9.3e6  # bytes
 
 
 def dur(p):
-    return float(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', p],
-                                capture_output=True, text=True).stdout)
+    from media_info import duration
+    return duration(p)
 
 
 def enc(src, dst):

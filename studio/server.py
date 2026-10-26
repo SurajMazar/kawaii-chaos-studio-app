@@ -23,10 +23,10 @@ from fastapi.exceptions import RequestValidationError  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
 from fastapi.staticfiles import StaticFiles  # noqa: E402
 
-from config import CODE_ROOT, CONFIG, STUDIO  # noqa: E402
+from config import CODE_ROOT, CONFIG  # noqa: E402
 from security.context import public_route, request_id  # noqa: E402
 
-DIST = STUDIO / 'web' / 'dist'
+DIST = CODE_ROOT / 'studio' / 'web' / 'dist'
 
 
 # ---------------- logging ----------------

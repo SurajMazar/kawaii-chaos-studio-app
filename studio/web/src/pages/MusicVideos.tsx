@@ -29,7 +29,7 @@ export default function MusicVideos() {
           <Space className="mb-3"><Input.Search allowClear placeholder="Search…" value={q} onChange={e => setQ(e.target.value)} style={{ width: 260 }} />
             <Typography.Text type="secondary">{rows.length} folders</Typography.Text></Space>
           <div data-tour="mv-table">
-            <Table<Item> size="middle" rowKey="id" dataSource={rows} pagination={false}
+            <Table<Item> size="middle" scroll={{ x: 760 }} rowKey="id" dataSource={rows} pagination={false}
               columns={[
                 { title: '', width: 76, render: (_, i) => i.thumb ? <img src={api.thumbUrl('mv', i.id, i.thumb, 120, i.mtime)} className="w-14 h-20 object-cover rounded" loading="lazy" /> : <div className="w-14 h-20 rounded bg-[#28232e]" /> },
                 { title: 'Folder', render: (_, i) => <div><a onClick={() => go(`/p/mv/${i.id}`)} className="font-display font-bold text-[15px]">{i.headline}</a>

@@ -12,4 +12,4 @@ while :; do
   [ -z "$todo" ] && break
   for n in $todo; do scripts/build_reel.sh "$n" 2>&1 | grep -E "upload|rror"; done
 done
-python3 scripts/update_trackers.py
+"${PY:-python3}" scripts/update_trackers.py

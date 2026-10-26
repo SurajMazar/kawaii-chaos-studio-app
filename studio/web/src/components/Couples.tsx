@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { App, Button, Card, Empty, Form, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd'
+import { App, Button, Card, Empty, Form, Grid, Input, Modal, Popconfirm, Space, Table, Typography } from 'antd'
 import { DeleteOutlined, PlusOutlined, SaveOutlined } from '@ant-design/icons'
 import { api } from '../api'
 import { useCan } from '../auth'
@@ -50,6 +50,7 @@ export default function CouplesEditor() {
   const [rows, setRows] = useState<Row[] | null>(null)
   const [dirty, setDirty] = useState(false)
   const [add, setAdd] = useState(false)
+  const phone = Grid.useBreakpoint().md === false
   const load = () => api.couples().then(c => { setRows(c.map(toRow)); setDirty(false) }).catch(e => message.error(e.message))
   useEffect(() => { load() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const set = (i: number, p: Partial<Row>) => { setRows(r => r && r.map((x, k) => k === i ? { ...x, ...p } : x)); setDirty(true) }
@@ -63,8 +64,17 @@ export default function CouplesEditor() {
       <Button type="primary" icon={<SaveOutlined />} disabled={!dirty} onClick={save}>Save</Button>
     </Space>}>
       <Typography.Paragraph type="secondary">The couples your comics are about. New project suggests them, captions use their hashtag. Saved in <code>couples.md</code>.</Typography.Paragraph>
-      {rows && !rows.length ? <Empty description="No couples yet — add your first one." /> :
-        <Table<Row> size="small" pagination={false} rowKey={(_, i) => String(i)} dataSource={rows ?? []} columns={[
+      {rows && !rows.length ? <Empty description="No couples yet — add your first one." /> : phone ?
+        <div className="flex flex-col gap-2">{(rows ?? []).map((r, i) => (
+          <Card key={i} size="small" title={cell('name', i, r)} extra={canEdit && <Popconfirm title="Remove this couple?" onConfirm={() => { setRows(x => x && x.filter((_, k) => k !== i)); setDirty(true) }}>
+            <Button size="small" type="text" danger icon={<DeleteOutlined />} /></Popconfirm>}>
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-2 gap-2">{cell('tag', i, r)}{cell('series', i, r)}</div>
+              <Typography.Text type="secondary" className="text-xs">Looks</Typography.Text>{cell('looks', i, r, true)}
+              <Typography.Text type="secondary" className="text-xs">Dynamic</Typography.Text>{cell('dynamic', i, r, true)}
+            </div>
+          </Card>))}</div> :
+        <Table<Row> scroll={{ x: 900 }} size="small" pagination={false} rowKey={(_, i) => String(i)} dataSource={rows ?? []} columns={[
           { title: 'Couple', width: 190, render: (_, r, i) => cell('name', i, r) },
           { title: 'Hashtag', width: 150, render: (_, r, i) => cell('tag', i, r) },
           { title: 'Series', width: 160, render: (_, r, i) => cell('series', i, r) },

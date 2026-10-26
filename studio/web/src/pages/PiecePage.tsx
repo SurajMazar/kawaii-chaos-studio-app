@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button, Dropdown, Result, Skeleton, Steps, Tabs, Tag, Tooltip } from 'antd'
+import { Button, Dropdown, Grid, Progress, Result, Skeleton, Steps, Tabs, Tag, Tooltip } from 'antd'
 import { ExportOutlined, FolderOpenOutlined, ReloadOutlined, VideoCameraOutlined } from '@ant-design/icons'
 import { api } from '../api'
 import { canLeave, go } from '../router'
@@ -52,6 +52,9 @@ export default function PiecePage({ kind, id, tab }: { kind: Kind; id: string; t
   useEffect(() => { reload() }, [reload])
   const own = useOwnArt()       // drawing the pictures yourself: no ChatGPT prompt step
   const steps = kind === 'strip' ? (own ? OWN_STEPS : STRIP_STEPS) : MV_STEPS
+  const bp = Grid.useBreakpoint()
+  const phone = bp.md === false
+  const compactSteps = bp.lg === false               // < 992 px: the 6–7 steps do not fit in one row
   const firstOpen = item ? steps.find(s => !s.done(item))?.key ?? 'post' : 'script'
   const active = tab ?? firstOpen
   const goTab = (t: string) => { if (t !== active && canLeave()) go(`/p/${kind}/${id}/${t}`) }
@@ -110,14 +113,19 @@ export default function PiecePage({ kind, id, tab }: { kind: Kind; id: string; t
           {button}
         </>} />
       <div className="flex-1 overflow-auto">
+        {compactSteps ? <div className={`${phone ? 'px-3' : 'px-5'} pt-3 flex items-center gap-3`} data-tour="steps">
+          <Progress type="circle" size={34} percent={Math.round(100 * steps.filter(s => s.done(item)).length / steps.length)} format={() => `${steps.filter(s => s.done(item)).length}/${steps.length}`} />
+          <div className="min-w-0 text-xs"><div className="font-semibold">{steps.find(s => !s.done(item))?.title ?? 'All done'}{steps.find(s => !s.done(item)) ? ' — next' : ''}</div>
+            <div className="opacity-60 truncate">{steps.find(s => !s.done(item))?.hint ?? 'Ready to post'}</div></div>
+        </div> :
         <div className="px-5 pt-4" data-tour="steps">
           <Steps size="small" current={cur < 0 ? undefined : cur} onChange={i => goTab(steps[i].key)}
             items={steps.map(s => ({
               title: s.title, description: <span className="text-[11px]">{s.done(item) ? <Tag color="green" className="!text-[10px] !m-0">done</Tag> : s.hint}</span>,
               status: s.key === active ? 'process' : s.done(item) ? 'finish' : 'wait',
             }))} />
-        </div>
-        <div className="px-5 pb-6" data-tour="tabs">
+        </div>}
+        <div className={phone ? 'px-3 pb-6' : 'px-5 pb-6'} data-tour="tabs">
           <Tabs activeKey={active} onChange={goTab} items={tabs} destroyInactiveTabPane />
         </div>
       </div>

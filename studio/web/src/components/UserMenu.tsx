@@ -98,17 +98,20 @@ function AccountModal({ open, onClose, tab }: { open: boolean; onClose: () => vo
 /** Avatar + menu at the bottom of the sidebar: who is signed in, account settings, sign out. */
 export function UserMenu({ collapsed }: { collapsed: boolean }) {
   const user = useUser()
+  const desktop = useAuth(s => !!s.state?.desktop)      // Mac app: one local owner, no passwords to manage
   const [modal, setModal] = useState<string | null>(null)
   if (!user) return null
   const initials = (user.name || user.email).split(/[\s@.]+/).filter(Boolean).slice(0, 2).map(s => s[0]!.toUpperCase()).join('')
   const items = [
     { key: 'who', type: 'group' as const, label: <div className="py-1"><div className="font-semibold">{user.name || user.email}</div><div className="text-xs opacity-60">{user.email}</div><Tag color={roleColor[user.role]} className="!mt-1">{user.role}</Tag></div> },
-    { type: 'divider' as const },
-    { key: 'password', icon: <KeyOutlined />, label: 'Change password' },
-    { key: '2fa', icon: <SafetyOutlined />, label: 'Two-factor sign-in' },
-    { key: 'sessions', icon: <LaptopOutlined />, label: 'Sessions & devices' },
-    { type: 'divider' as const },
-    { key: 'logout', icon: <LogoutOutlined />, label: 'Sign out', danger: true },
+    ...(desktop ? [] : [
+      { type: 'divider' as const },
+      { key: 'password', icon: <KeyOutlined />, label: 'Change password' },
+      { key: '2fa', icon: <SafetyOutlined />, label: 'Two-factor sign-in' },
+      { key: 'sessions', icon: <LaptopOutlined />, label: 'Sessions & devices' },
+      { type: 'divider' as const },
+      { key: 'logout', icon: <LogoutOutlined />, label: 'Sign out', danger: true },
+    ]),
   ]
   return <>
     <Dropdown placement="topLeft" trigger={['click']} menu={{ items, onClick: async ({ key }) => {

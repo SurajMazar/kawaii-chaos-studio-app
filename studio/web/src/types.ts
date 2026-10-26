@@ -118,6 +118,7 @@ export interface User {
 export interface AuthState {
   setup_required: boolean; setup_token_required: boolean; user: User | null; csrf: string; env: string
   local_features: boolean; two_factor_available: boolean
+  desktop?: boolean           // the Mac app: signed in automatically, no passwords
 }
 export interface SessionInfo { sid: string; created_at: number; last_seen: number; expires_at: number; ip: string; user_agent: string; current?: boolean }
 export type Backend = 'local' | 's3' | 'r2' | 's3compat'

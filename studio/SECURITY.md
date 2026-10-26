@@ -100,7 +100,7 @@ per user, bounded render sizes, caches with fixed sizes.
 response and in every log line; JSON logs in production; OpenAPI docs disabled in production; no `Server` header.
 
 **Supply chain / CI** — pinned web stack, `pip-audit`, `npm audit --audit-level=high`, `bandit`, `ruff`, tests and a
-Docker build + smoke test in the GitHub Actions workflow (`studio/ci/github-workflow-studio.yml`). The container runs as an unprivileged user (uid 10001), read-only root
+Docker build + smoke test in the GitHub Actions workflow (`.github/workflows/ci.yml`). The container runs as an unprivileged user (uid 10001), read-only root
 file system, all capabilities dropped, `no-new-privileges`, tini as PID 1.
 
 ## Security review — findings fixed (2026-10-25)

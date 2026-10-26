@@ -7,7 +7,7 @@ from fastapi.routing import APIRoute
 from conftest import MVID, PID
 
 PARAMS = {'kind': 'strip', 'pid': PID, 'rel': 'synopsis.md', 'jid': 'nojob', 'uid': '999', 'sid': 'nosession', 'key': 'make_pdf'}
-PUBLIC = {'/api/health', '/api/ready', '/api/auth/state', '/api/auth/login', '/api/auth/setup', '/api/auth/logout'}
+PUBLIC = {'/api/health', '/api/ready', '/api/auth/state', '/api/auth/login', '/api/auth/setup', '/api/auth/logout', '/api/auth/desktop'}
 
 
 def routes(app):
@@ -81,3 +81,17 @@ def test_editor_cannot_admin(editor):
 def test_static_and_health_are_public(anon):
     assert anon.get('/api/health').json()['ok'] is True
     assert anon.get('/api/ready').status_code in (200, 503)
+
+
+def test_desktop_signin_needs_the_launch_secret(app, monkeypatch):
+    from conftest import Client
+    c = Client(app)
+    monkeypatch.delenv('STUDIO_DESKTOP_TOKEN', raising=False)
+    assert c.get('/api/auth/desktop?token=x', follow_redirects=False).status_code == 404       # servers: no such route
+    monkeypatch.setenv('STUDIO_DESKTOP_TOKEN', 'launch-secret-0123456789')
+    assert c.get('/api/auth/desktop?token=wrong', follow_redirects=False).status_code == 404
+    assert c.get('/api/auth/desktop', follow_redirects=False).status_code == 404
+    r = c.get('/api/auth/desktop?token=launch-secret-0123456789', follow_redirects=False)
+    assert r.status_code == 303 and r.headers['location'] == '/'
+    st = c.get('/api/auth/state').json()
+    assert st['desktop'] is True and st['user']['role'] == 'admin' and st['user']['email'] == 'me@desktop.local'
