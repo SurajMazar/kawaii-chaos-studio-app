@@ -1,0 +1,5 @@
+{
+ "model": "eleven_v3",
+ "note": "Which ElevenLabs voice each character speaks with (Studio → a strip → Voiceover → Voice cast).",
+ "characters": []
+}

@@ -1,0 +1,71 @@
+# Kawaii Chaos Studio with Docker Compose.
+#
+#   cp .env.example .env        # then set STUDIO_SECRET_KEY (and STUDIO_ADMIN_* or use the setup screen)
+#   docker compose up -d --build
+#   open http://localhost:8770   (put Caddy/nginx with HTTPS in front for a real server — see studio/DEPLOY.md)
+#
+# Local S3 testing with MinIO (optional profile):
+#   docker compose --profile minio up -d --build
+#   then Settings -> Integrations -> "Other S3-compatible": endpoint http://minio:9000, bucket kawaii-studio,
+#   path-style on, keys = MINIO_ROOT_USER / MINIO_ROOT_PASSWORD (needs STUDIO_ALLOW_INSECURE_ENDPOINTS=1, dev only).
+services:
+  studio:
+    build: .
+    image: kawaii-chaos-studio:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      STUDIO_ENV: ${STUDIO_ENV:-production}
+    ports:
+      - "127.0.0.1:8770:8770"          # only reachable through your reverse proxy / this machine
+    volumes:
+      - studio-data:/data              # content when STORAGE_BACKEND=local
+      - studio-config:/config          # users DB, encrypted storage settings, app settings
+      - studio-cache:/cache            # thumbnails (safe to delete)
+      - studio-work:/work              # S3/R2 work cache (safe to delete)
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+
+  minio:
+    profiles: [minio]
+    # MinIO stopped publishing new community images in 2025: pin a release you trust (or a mirror) via MINIO_IMAGE
+    image: ${MINIO_IMAGE:-minio/minio:RELEASE.2025-04-22T22-12-26Z}
+    command: server /data --console-address :9001
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-kcsminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-}
+    ports:
+      - "127.0.0.1:9001:9001"          # MinIO console
+    volumes:
+      - minio-data:/data
+
+  minio-init:                          # creates the bucket once MinIO is up (uses the Studio image's boto3)
+    profiles: [minio]
+    image: kawaii-chaos-studio:latest
+    depends_on: [minio, studio]
+    restart: "no"
+    entrypoint: ["python", "-c"]
+    command:
+      - |
+        import os, time, boto3
+        s = boto3.client('s3', endpoint_url='http://minio:9000', region_name='us-east-1',
+                         aws_access_key_id=os.environ['MINIO_ROOT_USER'], aws_secret_access_key=os.environ['MINIO_ROOT_PASSWORD'])
+        for i in range(30):
+            try:
+                if 'kawaii-studio' not in [b['Name'] for b in s.list_buckets()['Buckets']]: s.create_bucket(Bucket='kawaii-studio')
+                print('bucket kawaii-studio ready'); break
+            except Exception as e: print('waiting for minio', e); time.sleep(2)
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-kcsminio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-}
+
+volumes:
+  studio-data:
+  studio-config:
+  studio-cache:
+  studio-work:
+  minio-data:

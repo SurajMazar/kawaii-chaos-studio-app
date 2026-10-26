@@ -1,0 +1,21 @@
+# your comics (created from starter/ on the first run) — never committed
+/data/
+# Python / Node / build output
+__pycache__/
+*.pyc
+.DS_Store
+studio/.venv/
+studio/.cache/
+studio/.pytest_cache/
+.ruff_cache/
+studio/web/node_modules/
+studio/web/dist/
+# server config: users DB, encrypted secrets, secret key, settings, S3 work cache
+studio/.config/
+studio/.workcache/
+studio/settings.json
+.studio_history/
+# env files (keep the example)
+.env
+.env.*
+!.env.example

@@ -1,0 +1,12 @@
+# Kawaii Chaos Studio backend. The codebase uses a compact one-line style on purpose, so the "one statement per line"
+# rules are off; real-bug rules (pyflakes, syntax, bugbear subset, bandit-style S rules) stay on.
+target-version = "py312"
+line-length = 160
+extend-exclude = [".venv", "web", ".config", ".workcache", ".cache"]
+
+[lint]
+select = ["E7", "E9", "F", "B006", "B008", "B012", "B904", "S102", "S307", "S506", "S602", "S604", "S605", "S606", "S608"]
+ignore = ["E401", "E701", "E702", "E731", "E741", "B008", "B904"]
+
+[lint.per-file-ignores]
+"tests/*" = ["S"]

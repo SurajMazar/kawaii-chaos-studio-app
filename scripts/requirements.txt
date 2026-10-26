@@ -1,0 +1,7 @@
+# What the scripts need (the Studio's own requirements in studio/requirements.txt include these too)
+numpy
+scipy
+opencv-python-headless
+pillow
+# optional: local music / SFX models for gen_audio.py (MusicGen, Stable Audio Open)
+# torch transformers diffusers accelerate soundfile
