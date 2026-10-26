@@ -1,0 +1,23 @@
+name: PR policy
+
+# Only the maintainer's pull requests are accepted; everyone else is welcome to fork (see CONTRIBUTING.md).
+# pull_request_target runs with this repository's token but never checks out or runs the PR's code.
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  close-outside-prs:
+    if: github.event.pull_request.user.login != github.repository_owner
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close with a friendly note
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          gh pr close "$PR" --repo "$REPO" --comment "Thanks for your interest! This repository only takes changes from its maintainer, so pull requests are closed automatically. You are very welcome to keep your changes in your fork (MIT licence) — and if you think everyone would benefit, please open an issue describing it and link your fork. See CONTRIBUTING.md."
