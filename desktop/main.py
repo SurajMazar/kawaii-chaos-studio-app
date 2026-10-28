@@ -44,6 +44,8 @@ CACHES = Path(os.environ.get('KCS_CACHE_DIR') or HOME / 'Library' / 'Caches' / A
 
 def _free_port(preferred: int = 0) -> int:
     with socket.socket() as s:
+        # SO_REUSEADDR like uvicorn: right after a quit the old port sits in TIME_WAIT for a minute and a plain bind fails
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         try: s.bind(('127.0.0.1', preferred))
         except OSError: s.bind(('127.0.0.1', 0))
         return s.getsockname()[1]
@@ -182,16 +184,56 @@ def _native_downloads():
     ])
 
 
-# Pages with a first-run tour (usePageTour keys in studio/web/src). Before the port was sticky, the "seen" marks were
-# lost on every launch; an existing install gets them all set once so the tours don't come back one more time.
+# Pages with a first-run tour (usePageTour keys in studio/web/src).
 TOUR_PAGES = ('dashboard', 'new', 'strip', 'mv', 'reel', 'lyric', 'voice', 'music', 'tools', 'settings', 'integrations', 'users')
-TOURS_SEEN_JS = ("(() => { const ks = %r.map(k => 'kcs.tour.' + k); if (ks.every(k => localStorage.getItem(k) === 'done')) return;"
-                 " ks.forEach(k => localStorage.setItem(k, 'done')); location.reload() })()" % list(TOUR_PAGES))
+READ_TOURS_JS = "Object.keys(localStorage).filter(k => k.startsWith('kcs.tour.') && localStorage.getItem(k) === 'done').map(k => k.slice(9))"
+
+
+class Tours:
+    """Which page tours are done, mirrored into Application Support. The window's localStorage belongs to
+    http://127.0.0.1:<port>; if the port ever has to change, the marks are copied into the new origin so the tours
+    don't start over. While the port stays the same the file just follows localStorage (Settings → "Show all tours
+    again" still works)."""
+
+    def __init__(self, f: Path, port: int, existing: bool):
+        import json
+        self.f, self.port, self.json = f, port, json
+        try: d = json.loads(f.read_text())
+        except (OSError, ValueError): d = dict(port=0, done=list(TOUR_PAGES) if existing else [])
+        self.done, self.inject = set(d.get('done', [])), d.get('port') != port
+
+    def save(self):
+        try: self.f.write_text(self.json.dumps(dict(port=self.port, done=sorted(self.done))))
+        except OSError: pass
+
+    def sync(self, w):
+        try: got = w.evaluate_js(READ_TOURS_JS)
+        except Exception: return
+        if not isinstance(got, list): return              # page not ready: never mistake that for "no tours done"
+        seen = set(got)
+        if self.inject:                                     # a new origin: bring the marks over once, then reload
+            self.inject = False
+            missing = sorted(self.done - seen)
+            if missing:
+                w.evaluate_js("(() => { %s.forEach(k => localStorage.setItem('kcs.tour.' + k, 'done')); location.reload() })()"
+                              % self.json.dumps(missing))
+                self.save(); return
+        self.done = seen; self.save()
+
+    def follow(self, w):
+        """Keep the file in step while the window is open (tours are marked done when they are closed)."""
+        w.events.loaded += lambda: self.sync(w)
+        def loop():
+            while True:
+                time.sleep(15)
+                try: self.sync(w)
+                except Exception: return
+        threading.Thread(target=loop, daemon=True, name='tours').start()
 
 
 def main():
     lock = _single_instance()  # noqa: F841 - held for the app's lifetime
-    existing = (SUPPORT / 'config').is_dir() and not (SUPPORT / 'desktop_port').exists()
+    existing = (SUPPORT / 'config').is_dir()                 # used the app before (tours may already be done)
     c = configure()
     srv, t = start_server(c['port'])
     import webview
@@ -200,7 +242,7 @@ def main():
     webview.settings['OPEN_EXTERNAL_LINKS_IN_BROWSER'] = True # ChatGPT / ElevenLabs links open in your browser
     url = f"http://127.0.0.1:{c['port']}/api/auth/desktop?token={c['token']}"
     w = webview.create_window(APP, url, width=1440, height=920, min_size=(1000, 680), text_select=True)
-    if existing: w.events.loaded += lambda: w.evaluate_js(TOURS_SEEN_JS)
+    Tours(SUPPORT / 'tours_seen.json', c['port'], existing).follow(w)
     webview.start(private_mode=False, storage_path=str(SUPPORT / 'webview'))
     srv.should_exit = True; t.join(timeout=8)
 
