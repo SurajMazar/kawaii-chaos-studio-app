@@ -186,7 +186,8 @@ def _native_downloads():
 
 # Pages with a first-run tour (usePageTour keys in studio/web/src).
 TOUR_PAGES = ('dashboard', 'new', 'strip', 'mv', 'reel', 'lyric', 'voice', 'music', 'tools', 'settings', 'integrations', 'users')
-READ_TOURS_JS = "Object.keys(localStorage).filter(k => k.startsWith('kcs.tour.') && localStorage.getItem(k) === 'done').map(k => k.slice(9))"
+# run_js, not evaluate_js: evaluate_js wraps the script in eval(), which the Studio's CSP (script-src 'self') blocks
+READ_TOURS_JS = "JSON.stringify(Object.keys(localStorage).filter(k => k.startsWith('kcs.tour.') && localStorage.getItem(k) === 'done').map(k => k.slice(9)))"
 
 
 class Tours:
@@ -207,7 +208,7 @@ class Tours:
         except OSError: pass
 
     def sync(self, w):
-        try: got = w.evaluate_js(READ_TOURS_JS)
+        try: got = self.json.loads(str(w.run_js(READ_TOURS_JS)))
         except Exception: return
         if not isinstance(got, list): return              # page not ready: never mistake that for "no tours done"
         seen = set(got)
@@ -215,9 +216,10 @@ class Tours:
             self.inject = False
             missing = sorted(self.done - seen)
             if missing:
-                w.evaluate_js("(() => { %s.forEach(k => localStorage.setItem('kcs.tour.' + k, 'done')); location.reload() })()"
+                self.save()                                 # reload on a timer: a reload inside the call never returns
+                w.run_js("(() => { %s.forEach(k => localStorage.setItem('kcs.tour.' + k, 'done')); setTimeout(() => location.reload(), 50); return true })()"
                               % self.json.dumps(missing))
-                self.save(); return
+                return
         self.done = seen; self.save()
 
     def follow(self, w):
