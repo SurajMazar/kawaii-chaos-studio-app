@@ -42,9 +42,24 @@ SUPPORT = Path(os.environ.get('KCS_SUPPORT_DIR') or HOME / 'Library' / 'Applicat
 CACHES = Path(os.environ.get('KCS_CACHE_DIR') or HOME / 'Library' / 'Caches' / APP)
 
 
-def _free_port() -> int:
+def _free_port(preferred: int = 0) -> int:
     with socket.socket() as s:
-        s.bind(('127.0.0.1', 0)); return s.getsockname()[1]
+        try: s.bind(('127.0.0.1', preferred))
+        except OSError: s.bind(('127.0.0.1', 0))
+        return s.getsockname()[1]
+
+
+def _sticky_port(support: Path) -> int:
+    """The same port every launch when it's free: the window's localStorage (tours seen, UI choices) belongs to
+    http://127.0.0.1:<port>, so a new port each launch made the app forget all of it."""
+    f = support / 'desktop_port'
+    try: saved = int(f.read_text().strip())
+    except (OSError, ValueError): saved = 0
+    port = _free_port(saved if 1024 < saved < 65536 else 0)
+    if port != saved:
+        try: f.write_text(str(port))
+        except OSError: pass
+    return port
 
 
 def _ffmpeg_on_path(bin_dir: Path):
@@ -77,8 +92,8 @@ def _single_instance():
 
 def configure(data_dir: Path | None = None, support: Path = SUPPORT, caches: Path = CACHES, log_file: bool = True) -> dict:
     """Environment for a local, single-person Studio. Returns {port, token, ffmpeg}."""
-    port, token = _free_port(), secrets.token_urlsafe(32)
     (support / 'logs').mkdir(parents=True, exist_ok=True)
+    port, token = (_free_port() if data_dir is not None else _sticky_port(support)), secrets.token_urlsafe(32)
     env = {
         'STUDIO_ENV': 'development',                         # local features on (Downloads import, export folder)
         'STUDIO_CODE_ROOT': str(CODE),
@@ -119,15 +134,73 @@ def start_server(port: int):
     raise RuntimeError('the Studio server did not start')
 
 
+def _native_downloads():
+    """Every attachment becomes a WebKit download with a Save dialog. pywebview 5.4 on its own shows attachments it can
+    display (PNG, MP4) in place of the app, and fetches the rest (Export .zip) without the window's sign-in cookie, so
+    the server answers 401 and the saved file is junk. A WKDownload goes through the window's own session.
+    KCS_DOWNLOAD_TO=<folder> saves there without the dialog (tests)."""
+    import objc
+    import AppKit, Foundation, WebKit
+    from webview.platforms.cocoa import BrowserView
+
+    keep = []                                                 # delegates are weak: hold them while downloads run
+
+    class SaveDelegate(AppKit.NSObject):
+        def downloadDidFinish_(self, download):
+            if self in keep: keep.remove(self)
+
+        def download_didFailWithError_resumeData_(self, download, error, data):
+            print('download failed:', error, flush=True)
+            if self in keep: keep.remove(self)
+
+        def download_decideDestinationUsingResponse_suggestedFilename_completionHandler_(self, download, response, name, done):
+            auto = os.environ.get('KCS_DOWNLOAD_TO')
+            if auto:
+                done(Foundation.NSURL.fileURLWithPath_(os.path.join(auto, name))); return
+            dlg = AppKit.NSSavePanel.savePanel()
+            dlg.setDirectoryURL_(Foundation.NSURL.fileURLWithPath_(str(HOME / 'Downloads')))
+            dlg.setNameFieldStringValue_(name)
+            done(dlg.URL() if dlg.runModal() == AppKit.NSModalResponseOK else None)
+
+    def attach(download):
+        d = SaveDelegate.alloc().init(); keep.append(d); download.setDelegate_(d)
+
+    def decide_response(self, webview, nav, handler):
+        r = nav.response()
+        disp = r.valueForHTTPHeaderField_('Content-Disposition') if hasattr(r, 'valueForHTTPHeaderField_') else None
+        if (disp or '').lower().startswith('attachment') or not nav.canShowMIMEType():
+            handler(WebKit.WKNavigationResponsePolicyDownload)
+        else:
+            handler(WebKit.WKNavigationResponsePolicyAllow)
+
+    D = BrowserView.BrowserDelegate
+    sig = D.webView_decidePolicyForNavigationResponse_decisionHandler_.signature
+    objc.classAddMethods(D, [
+        objc.selector(decide_response, selector=b'webView:decidePolicyForNavigationResponse:decisionHandler:', signature=sig),
+        objc.selector(lambda self, w, nav, dl: attach(dl), selector=b'webView:navigationResponse:didBecomeDownload:', signature=b'v@:@@@'),
+        objc.selector(lambda self, w, act, dl: attach(dl), selector=b'webView:navigationAction:didBecomeDownload:', signature=b'v@:@@@'),
+    ])
+
+
+# Pages with a first-run tour (usePageTour keys in studio/web/src). Before the port was sticky, the "seen" marks were
+# lost on every launch; an existing install gets them all set once so the tours don't come back one more time.
+TOUR_PAGES = ('dashboard', 'new', 'strip', 'mv', 'reel', 'lyric', 'voice', 'music', 'tools', 'settings', 'integrations', 'users')
+TOURS_SEEN_JS = ("(() => { const ks = %r.map(k => 'kcs.tour.' + k); if (ks.every(k => localStorage.getItem(k) === 'done')) return;"
+                 " ks.forEach(k => localStorage.setItem(k, 'done')); location.reload() })()" % list(TOUR_PAGES))
+
+
 def main():
     lock = _single_instance()  # noqa: F841 - held for the app's lifetime
+    existing = (SUPPORT / 'config').is_dir() and not (SUPPORT / 'desktop_port').exists()
     c = configure()
     srv, t = start_server(c['port'])
     import webview
+    _native_downloads()
     webview.settings['ALLOW_DOWNLOADS'] = True                # Export .zip, Download buttons → Save dialog
     webview.settings['OPEN_EXTERNAL_LINKS_IN_BROWSER'] = True # ChatGPT / ElevenLabs links open in your browser
     url = f"http://127.0.0.1:{c['port']}/api/auth/desktop?token={c['token']}"
-    webview.create_window(APP, url, width=1440, height=920, min_size=(1000, 680), text_select=True)
+    w = webview.create_window(APP, url, width=1440, height=920, min_size=(1000, 680), text_select=True)
+    if existing: w.events.loaded += lambda: w.evaluate_js(TOURS_SEEN_JS)
     webview.start(private_mode=False, storage_path=str(SUPPORT / 'webview'))
     srv.should_exit = True; t.join(timeout=8)
 
