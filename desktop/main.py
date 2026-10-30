@@ -184,6 +184,34 @@ def _native_downloads():
     ])
 
 
+def _native_share(w):
+    """Share button (Files tab) → the macOS share menu (AirDrop, Messages, Mail, Notes…) for the file itself, opened
+    next to the button. The server thread asks; AppKit has to show it on the main thread."""
+    import AppKit, Foundation
+    from PyObjCTools import AppHelper
+    from webview.platforms.cocoa import BrowserView
+    from api import native
+    keep = []                                                 # the picker must stay alive while its menu is open
+
+    def share(path, rect):
+        def show():
+            try:
+                bv = BrowserView.instances.get(w.uid)
+                if bv is None: return
+                view = bv.webview
+                x, y, rw, rh = rect
+                flipped = view.isFlipped()
+                if not flipped: y = view.bounds().size.height - y - rh
+                picker = AppKit.NSSharingServicePicker.alloc().initWithItems_([Foundation.NSURL.fileURLWithPath_(str(path))])
+                keep[:] = [picker]
+                picker.showRelativeToRect_ofView_preferredEdge_(Foundation.NSMakeRect(x, y, max(rw, 1), max(rh, 1)), view,
+                                                                Foundation.NSMaxYEdge if flipped else Foundation.NSMinYEdge)  # below the button
+            except Exception as e:                            # never take the window down over a share menu
+                print('share failed:', repr(e), flush=True)
+        AppHelper.callAfter(show)
+    native.share = share
+
+
 # Pages with a first-run tour (usePageTour keys in studio/web/src).
 TOUR_PAGES = ('dashboard', 'new', 'strip', 'mv', 'reel', 'lyric', 'voice', 'music', 'tools', 'settings', 'integrations', 'users')
 # run_js, not evaluate_js: evaluate_js wraps the script in eval(), which the Studio's CSP (script-src 'self') blocks
@@ -245,6 +273,7 @@ def main():
     url = f"http://127.0.0.1:{c['port']}/api/auth/desktop?token={c['token']}"
     w = webview.create_window(APP, url, width=1440, height=920, min_size=(1000, 680), text_select=True)
     Tours(SUPPORT / 'tours_seen.json', c['port'], existing).follow(w)
+    _native_share(w)
     webview.start(private_mode=False, storage_path=str(SUPPORT / 'webview'))
     srv.should_exit = True; t.join(timeout=8)
 

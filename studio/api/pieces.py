@@ -13,7 +13,7 @@ from security.context import min_role
 from security.validation import check_upload, sanitize_filename
 from storage import SPath, get_ws
 
-from . import jobs
+from . import jobs, native
 from .core import (AUDIO_EXT, IMG_EXT, REFS, ROOT, SCRIPTS, UPLOAD, VIDEO_EXT, backup, font_file, get_settings,
                    natkey, piece_dir, read_text, safe_join, script_python, sha1_file, thumb_file, today,
                    write_atomic)
@@ -103,6 +103,18 @@ def files(kind: str, pid: str, dir: str = '', hidden: bool = False):
 @router.get('/api/p/{kind}/{pid}/file/{rel:path}')
 def get_file(kind: str, pid: str, rel: str, request: Request, download: bool = False):
     return serve(safe_join(piece_dir(kind, pid), rel), request, download)
+
+
+@router.post('/api/p/{kind}/{pid}/share')
+@min_role('viewer')
+def share_file(kind: str, pid: str, rel: str = Body(...), rect: list[float] = Body([0, 0, 0, 0])):
+    """Mac app: the macOS share menu for one file of the piece, opened next to the button (rect = x, y, w, h)."""
+    if native.share is None: raise HTTPException(404, 'Sharing to other apps works in the Mac app.')
+    p = safe_join(piece_dir(kind, pid), rel)
+    if not p.is_file(): raise HTTPException(404, 'no such file')
+    x, y, w, h = (list(rect) + [0, 0, 0, 0])[:4]
+    native.share(p.local(), (x, y, w, h))
+    return dict(ok=True)
 
 
 @router.get('/api/p/{kind}/{pid}/thumb/{rel:path}')

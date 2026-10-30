@@ -64,6 +64,7 @@ export const api = {
   rootUrl: (rel: string, download = false) => `/api/root/${rel.split('/').map(q).join('/')}${download ? '?download=1' : ''}`,
   rootThumb: (rel: string, w = 240) => `/api/rthumb/${rel.split('/').map(q).join('/')}?w=${w}`,
   files: (k: Kind, id: string, dir: string) => get<{ dir: string; entries: FileEntry[] }>(`${P(k, id)}/files?dir=${q(dir)}`),
+  share: (k: Kind, id: string, rel: string, rect: number[]) => post<{ ok: boolean }>(`${P(k, id)}/share`, { rel, rect }),   // Mac app: macOS share menu
   text: (k: Kind, id: string, name: string) => get<{ name: string; exists: boolean; text: string; mtime: number | null }>(`${P(k, id)}/text?name=${q(name)}`),
   saveText: (k: Kind, id: string, name: string, text: string) => put<{ ok: boolean }>(`${P(k, id)}/text?name=${q(name)}`, { text }),
   images: (k: Kind, id: string) => get<{ groups: { key: string; title: string; items: ImgItem[] }[]; stylechecks: { path: string; name: string; mtime: number }[] }>(`${P(k, id)}/images`),

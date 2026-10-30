@@ -71,6 +71,17 @@ def test_upload_and_file_download(editor):
     assert f.status_code == 200 and f.content == png_bytes() and 'attachment' in f.headers['content-disposition']
 
 
+
+def test_share_uses_the_mac_app_hook(viewer, monkeypatch):
+    from api import native
+    assert viewer.post(f'/api/p/strip/{PID}/share', json={'rel': 'strip.png'}).status_code == 404   # servers: no share menu
+    got = []
+    monkeypatch.setattr(native, 'share', lambda p, rect: got.append((p, rect)))
+    r = viewer.post(f'/api/p/strip/{PID}/share', json={'rel': 'strip.png', 'rect': [10, 20, 30, 40]})
+    assert r.status_code == 200 and [(p.resolve(), rect) for p, rect in got] == [((DATA / 'projects' / PID / 'strip.png').resolve(), (10, 20, 30, 40))]
+    assert viewer.post(f'/api/p/strip/{PID}/share', json={'rel': '../../outside_secret.txt'}).status_code in (400, 404)
+    assert viewer.post(f'/api/p/strip/{PID}/share', json={'rel': 'nope.png'}).status_code == 404 and len(got) == 1
+
 # ---------------- the same app on an S3 bucket (moto) ----------------
 @pytest.fixture
 def s3_ws(monkeypatch, tmp_path):
